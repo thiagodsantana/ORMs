@@ -1,0 +1,6 @@
+@CsharpORM.Performance_HostAddress = http://localhost:5009
+
+GET {{CsharpORM.Performance_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

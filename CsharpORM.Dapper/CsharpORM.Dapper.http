@@ -1,0 +1,6 @@
+@CsharpORM.Dapper_HostAddress = http://localhost:5283
+
+GET {{CsharpORM.Dapper_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
