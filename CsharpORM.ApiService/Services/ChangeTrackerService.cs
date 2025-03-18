@@ -5,7 +5,7 @@ namespace CsharpORM.EF.Services
 {
     public class ChangeTrackerService(MeuDbContext context)
     {
-        // ✅ Adiciona um novo cliente e exibe o estado
+        // Adiciona um novo cliente e exibe o estado
         public async Task<Cliente> AdicionarClienteAsync(Cliente cliente)
         {
             Console.WriteLine($"Estado antes do Add: {context.Entry(cliente).State}"); // Detached
@@ -19,7 +19,7 @@ namespace CsharpORM.EF.Services
             return cliente;
         }
 
-        // ✅ Obtém um cliente, modifica seu nome e mostra estados
+        // Obtém um cliente, modifica seu nome e mostra estados
         public async Task<Cliente?> ModificarClienteAsync(int id, string novoNome)
         {
             var cliente = await context.Clientes.FindAsync(id);
@@ -37,7 +37,7 @@ namespace CsharpORM.EF.Services
             return cliente;
         }
 
-        // ✅ Obtém um cliente e remove do banco
+        // Obtém um cliente e remove do banco
         public async Task<bool> RemoverClienteAsync(int id)
         {
             var cliente = await context.Clientes.FindAsync(id);
@@ -54,7 +54,7 @@ namespace CsharpORM.EF.Services
             return true;
         }
 
-        // ✅ Lista todas as entidades rastreadas pelo Change Tracker
+        // Lista todas as entidades rastreadas pelo Change Tracker
         public void ListarEntidadesRastreadas()
         {
             foreach (var entry in context.ChangeTracker.Entries())
@@ -63,7 +63,7 @@ namespace CsharpORM.EF.Services
             }
         }
 
-        // ✅ Desfazer todas as mudanças antes de salvar
+        // Desfazer todas as mudanças antes de salvar
         public void ReverterAlteracoes()
         {
             foreach (var entry in context.ChangeTracker.Entries())
@@ -81,7 +81,7 @@ namespace CsharpORM.EF.Services
             Console.WriteLine("Todas as alterações foram revertidas.");
         }
 
-        // ✅ Remover entidade do rastreamento (Detach)
+        // Remover entidade do rastreamento (Detach)
         public void DesanexarCliente(Cliente cliente)
         {
             context.Entry(cliente).State = EntityState.Detached;

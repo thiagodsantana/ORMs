@@ -1,5 +1,4 @@
 ﻿using CsharpORM.Data;
-using CsharpORM.Domain.Classes;
 using System.Data.Entity;
 
 namespace CsharpORM.EF.Services.LoadingModes

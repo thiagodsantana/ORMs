@@ -6,6 +6,10 @@ using System.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+#region
+var connectionStrig = "Server=127.0.0.1,1433;Database=database;User ID=sa;Password=TnPgk+ZQY378UXmfEpRS04;TrustServerCertificate=True;";
+#endregion
+
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
 // Add services to the container.
@@ -19,7 +23,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 
-builder.Services.AddScoped<IDbConnection>(_ => new SqlConnection("Server=127.0.0.1,1433;Database=database;User ID=sa;Password=TnPgk+ZQY378UXmfEpRS04;TrustServerCertificate=True;"));
+builder.Services.AddScoped<IDbConnection>(_ => new SqlConnection(connectionStrig));
 builder.Services.AddScoped<DapperService>();
 
 // Adiciona Swagger
@@ -60,7 +64,7 @@ app.UseRouting();
 // Rota GET utilizando Dapper para buscar todos os clientes
 app.MapGet("/dapper/clientes", async (DapperService dapperService) =>
 {
-    var clientes = await dapperService.GetClientes();
+    var clientes = await dapperService.GetClientesComEmprestimos();
     return Results.Ok(clientes);
 });
 

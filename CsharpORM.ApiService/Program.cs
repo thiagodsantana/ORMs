@@ -1,6 +1,6 @@
 ﻿using CsharpORM.Data;
 using CsharpORM.Domain.Classes;
-using CsharpORM.EF.Data.Interceptor;
+using CsharpORM.EF.Interceptor;
 using CsharpORM.EF.Services;
 using CsharpORM.EF.Services.LoadingModes;
 using Microsoft.EntityFrameworkCore;
@@ -20,21 +20,23 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.WriteIndented = true;
 });
 
-builder.Services.AddSingleton<CustomInterceptor>();
+builder.Services.AddSingleton<CustomDbCommandInterceptor>();
 
 /*
  * Configuração do banco de dados com Entity Framework (EF) Core 
  * utilizando Code First e Migrations
  */
-builder.AddSqlServerDbContext<MeuDbContext>("database", null, options =>
+builder.Services.AddDbContext<MeuDbContext>((sp, options) =>
 {
+    // Obtém o interceptor do container DI
+    var customDbCommandInterceptor = sp.GetRequiredService<CustomDbCommandInterceptor>();
+
     options
-           .UseLazyLoadingProxies() // Habilita Lazy Loading
-           .AddInterceptors(builder.Services.BuildServiceProvider() // Adiciona Interceptor personalizado
-                                            .GetRequiredService<CustomInterceptor>())
-           .LogTo(Console.WriteLine, LogLevel.Information);
-    
+        .UseSqlServer(builder.Configuration.GetConnectionString("database")) // Configuração correta do SQL Server
+        .UseLazyLoadingProxies() // Habilita Lazy Loading
+        .AddInterceptors(customDbCommandInterceptor); // Adiciona Interceptor personalizado
 });
+
 
 builder.Services.AddScoped<EagerLoadingService>();
 builder.Services.AddScoped<ExplicitLoadingService>();
@@ -98,7 +100,7 @@ app.MapGet("/lazy/clientes/{id}", async (int id, LazyLoadingService lazyService)
 {
     var cliente = await lazyService.GetClienteComEmprestimos(id);
     if (cliente is null) return Results.NotFound("Cliente não encontrado");
-    return Results.Ok(new { Cliente = cliente, Emprestimos = cliente.Emprestimos });
+    return Results.Ok(new { cliente, cliente.Emprestimos });
 });
 
 // Change Tracker API

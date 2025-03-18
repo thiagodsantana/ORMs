@@ -10,6 +10,7 @@ using BenchmarkDotNet.Running;
 using Perfolizer.Horology;
 
 [Config(typeof(CustomBenchmarkConfig))]
+[MemoryDiagnoser]
 [RankColumn]
 public class ApiBenchmark
 {
@@ -27,7 +28,13 @@ public class ApiBenchmark
     [Benchmark]
     public async Task<string> EFEagerClientes()
     {
-        return await httpClient.GetStringAsync($"https://localhost:7512/clientes?count={RecordCount}");
+        return await httpClient.GetStringAsync($"https://localhost:7512/eager/clientes?count={RecordCount}");
+    }
+
+    [Benchmark]
+    public async Task<string> EFLazyClientes()
+    {
+        return await httpClient.GetStringAsync($"https://localhost:7512/lazy/clientes/1?count={RecordCount}");
     }
 
     [Benchmark]
