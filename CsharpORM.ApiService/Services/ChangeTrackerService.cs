@@ -1,5 +1,7 @@
 ﻿using CsharpORM.Data;
+using CsharpORM.Domain.Classes;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace CsharpORM.EF.Services
 {
@@ -18,6 +20,41 @@ namespace CsharpORM.EF.Services
 
             return cliente;
         }
+
+        #region Uso de Transactions
+        public void AdicionarClientesTransacaoImplicita()
+        {
+            // Adiciona duas entidades
+            context.Clientes.Add(new Cliente { Nome = "Antônio João ", Cpf = "95837385059" });
+            context.Clientes.Add(new Cliente { Nome = "Josefa Renilde", Cpf = "73653792032" });
+
+            // Efetua todas as operações dentro de uma única transação
+            context.SaveChanges();
+
+        }
+
+        public void AdicionarClientesTransacaoExplicita()
+        {
+            using var transaction = context.Database.BeginTransaction();
+            try
+            {
+                var cliente = new Cliente { Nome = "Carlos Daniel", Cpf = "87612345090" };
+                context.Clientes.Add(cliente);
+                context.SaveChanges(); // Primeira operação dentro da transação
+
+                var emprestimo = new Emprestimo { ClienteId = cliente.Id, Valor = 500, Parcelas = 10, TaxaJuros = 3 };
+                context.Emprestimos.Add(emprestimo);
+                context.SaveChanges(); // Segunda operação dentro da mesma transação
+
+                transaction.Commit(); // Se tudo der certo, confirma a transação
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback(); // Se ocorrer erro, desfaz tudo
+                Console.WriteLine($"Erro: {ex.Message}");
+            }
+        }
+        #endregion
 
         // Obtém um cliente, modifica seu nome e mostra estados
         public async Task<Cliente?> ModificarClienteAsync(int id, string novoNome)
