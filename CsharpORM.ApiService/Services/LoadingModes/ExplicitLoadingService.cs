@@ -1,43 +1,54 @@
 ﻿using CsharpORM.Data;
-using CsharpORM.Domain.Classes;
+using Microsoft.EntityFrameworkCore;
 
 namespace CsharpORM.EF.Services.LoadingModes
 {
-    public class ExplicitLoadingService
+    /// <summary>
+    /// Serviço responsável por demonstrar o carregamento explícito (Explicit Loading)
+    /// com o Entity Framework.
+    /// </summary>
+    public class ExplicitLoadingService(MeuDbContext context)
     {
-        private readonly MeuDbContext _context;
-
-        public ExplicitLoadingService(MeuDbContext context)
-        {
-            _context = context;
-        }
-
+        /// <summary>
+        /// Busca um cliente pelo ID e carrega explicitamente seus empréstimos.
+        /// </summary>
+        /// <param name="id">Identificador do cliente.</param>
+        /// <returns>Cliente com a coleção de empréstimos carregada, ou null se não encontrado.</returns>
         public async Task<Cliente?> GetClienteComEmprestimos(int id)
         {
-            var cliente = await _context.Clientes.FindAsync(id);
+            var cliente = await context.Clientes.FindAsync(id); // Busca o cliente pelo ID no banco de dados
             if (cliente != null)
             {
-                await _context.Entry(cliente).Collection(c => c.Emprestimos).LoadAsync();
+                // Carrega explicitamente a coleção de empréstimos do cliente
+                await context.Entry(cliente).Collection(c => c.Emprestimos).LoadAsync();
             }
-            return cliente;
+            return cliente; // Retorna o cliente com os empréstimos carregados
         }
 
+        /// <summary>
+        /// Busca todos os clientes e carrega explicitamente seus empréstimos.
+        /// </summary>
+        /// <returns>Lista de clientes com seus respectivos empréstimos carregados.</returns>
         public async Task<List<Cliente>> GetClientesComEmprestimos()
         {
-            var clientes = _context.Clientes.ToList(); // Busca apenas os clientes
-
+            var clientes = await context.Clientes.ToListAsync(); // Busca a lista de clientes do banco de dados
 
             foreach (var cliente in clientes)
             {
-                // Checa se os empréstimos já estão carregados ANTES de acessá-los
-                bool estaCarregado = _context.Entry(cliente).Collection(c => c.Emprestimos).IsLoaded;
+                // Verifica se os empréstimos já foram carregados antes de acessá-los
+                bool estaCarregado = context.Entry(cliente).Collection(c => c.Emprestimos).IsLoaded;
                 Console.WriteLine($"Os empréstimos já estavam carregados? {estaCarregado}");
-                await _context.Entry(cliente).Collection(c => c.Emprestimos).LoadAsync(); // Carrega os empréstimos explicitamente
+
+                // Se os empréstimos não estiverem carregados, realiza o carregamento explícito
+                if (!estaCarregado)
+                {
+                    await context.Entry(cliente).Collection(c => c.Emprestimos).LoadAsync();
+                }
+
                 Console.WriteLine($"Número de empréstimos carregados: {cliente.Emprestimos?.Count}");
             }
 
-            return clientes;
+            return clientes; // Retorna a lista de clientes com os empréstimos carregados
         }
     }
-
 }

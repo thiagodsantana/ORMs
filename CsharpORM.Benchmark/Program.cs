@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Exporters.Csv;
@@ -18,30 +15,18 @@ public class ApiBenchmark
 
     [Params(10)] // Testar com diferentes quantidades de registros
     public int RecordCount;
-    
+
     [Benchmark]
-    public async Task<string> DapperClientes()
+    public async Task<string> DapperClientesComEmprestimos()
     {
         return await httpClient.GetStringAsync($"https://localhost:7015/dapper/clientes?count={RecordCount}");
     }
 
     [Benchmark]
-    public async Task<string> EFEagerClientes()
+    public async Task<string> EntityFrameworkClientesComEmprestimos()
     {
         return await httpClient.GetStringAsync($"https://localhost:7512/eager/clientes?count={RecordCount}");
     }
-
-    [Benchmark]
-    public async Task<string> EFLazyClientes()
-    {
-        return await httpClient.GetStringAsync($"https://localhost:7512/lazy/clientes/1?count={RecordCount}");
-    }
-
-    [Benchmark]
-    public async Task<string> EFExplicitClientes()
-    {
-        return await httpClient.GetStringAsync($"https://localhost:7512/explicit/clientes?count={RecordCount}");
-    }    
 }
 
 // Configuração personalizada do benchmark

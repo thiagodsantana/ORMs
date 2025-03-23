@@ -1,5 +1,4 @@
 ﻿using CsharpORM.Data;
-using CsharpORM.Domain.Classes;
 using CsharpORM.EF.Interceptor;
 using CsharpORM.EF.Services;
 using CsharpORM.EF.Services.LoadingModes;
@@ -8,18 +7,20 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
+// Adiciona configurações padrões e integrações do .NET Aspire
 builder.AddServiceDefaults();
-// Add services to the container.
+
+// Adiciona serviços ao contêiner
 builder.Services.AddProblemDetails();
 
-
+// Configuração do JSON para preservar referências circulares e formatar saída
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
     options.SerializerOptions.WriteIndented = true;
 });
 
+// Registra o interceptor de comandos personalizados do Entity Framework
 builder.Services.AddSingleton<CustomDbCommandInterceptor>();
 
 /*
@@ -37,13 +38,13 @@ builder.Services.AddDbContext<MeuDbContext>((sp, options) =>
         .AddInterceptors(customDbCommandInterceptor); // Adiciona Interceptor personalizado
 });
 
-
+// Registra os serviços de carregamento de dados
 builder.Services.AddScoped<EagerLoadingService>();
 builder.Services.AddScoped<ExplicitLoadingService>();
 builder.Services.AddScoped<LazyLoadingService>();
 builder.Services.AddScoped<ChangeTrackerService>();
 
-// Adiciona Swagger
+// Adiciona suporte ao Swagger para documentação da API
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -54,9 +55,10 @@ builder.Services.AddSwaggerGen(options =>
         Description = "API para demonstrar diferentes tipos de carregamento de dados (Eager, Explicit, Lazy) utilizando Entity Framework."
     });
 });
+
 var app = builder.Build();
 
-#region Configurando o Swagger
+#region Configuração do Swagger
 // Ativa Swagger no ambiente de desenvolvimento
 app.UseSwagger();
 app.UseSwaggerUI(options =>
@@ -64,12 +66,9 @@ app.UseSwaggerUI(options =>
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "API de Clientes e Empréstimos v1");
     options.RoutePrefix = "swagger";
 });
-
-app.UseSwagger();
-app.UseSwaggerUI();
-
 #endregion
 
+// Verifica se está no ambiente de desenvolvimento e inicializa o banco de dados
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -80,34 +79,33 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 
-// Eager Loading - Carrega Clientes com Empréstimos na mesma consulta
+// Endpoint para Eager Loading - Carrega Clientes com Empréstimos na mesma consulta
 app.MapGet("eager/clientes", async (EagerLoadingService eagerService) =>
 {
-    var clientes = await eagerService.GetClientesComEmprestimos().ToListAsync();
+    var clientes = await eagerService.GetClientesComEmprestimos();
     return Results.Ok(clientes);
 });
 
-// Explicit Loading - Carrega os Empréstimos de um Cliente sob demanda
+// Endpoint para Explicit Loading - Carrega os Empréstimos de um Cliente sob demanda
 app.MapGet("explicit/clientes", async (ExplicitLoadingService explicitService) =>
 {
     var cliente = await explicitService.GetClientesComEmprestimos();
-    if (cliente is null) return Results.NotFound("Cliente não encontrado");
     return Results.Ok(cliente);
 });
 
-// Lazy Loading - Carrega os Empréstimos automaticamente ao acessar a propriedade
-app.MapGet("/lazy/clientes/{id}", async (int id, LazyLoadingService lazyService) =>
+// Endpoint para Lazy Loading - Carrega os Empréstimos automaticamente ao acessar a propriedade
+app.MapGet("/lazy/clientes", async (LazyLoadingService lazyService) =>
 {
-    var cliente = await lazyService.GetClienteComEmprestimos(id);
-    if (cliente is null) return Results.NotFound("Cliente não encontrado");
-    return Results.Ok(new { cliente, cliente.Emprestimos });
+    var clientes = await lazyService.GetTodosClientesComEmprestimos();
+    return Results.Ok(clientes);
 });
 
-// Change Tracker API
+// Endpoint para Change Tracker API - Adiciona um cliente ao banco de dados
 app.MapPost("changetracker/clientes", async (Cliente cliente, ChangeTrackerService changeTrackerService) =>
 {
     await changeTrackerService.AdicionarClienteAsync(cliente);
     return Results.Created($"/clientes/{cliente.Id}", cliente);
 });
 
+// Inicia a aplicação
 app.Run();

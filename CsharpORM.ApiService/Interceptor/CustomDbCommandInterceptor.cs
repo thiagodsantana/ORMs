@@ -5,16 +5,19 @@ using System.Diagnostics;
 
 namespace CsharpORM.EF.Interceptor
 {
+    /// <summary>
+    /// Interceptor personalizado para comandos do Entity Framework.
+    /// Implementa logging e política de retry com Polly.
+    /// </summary>
     public class CustomDbCommandInterceptor(ILogger<CustomDbCommandInterceptor> logger) : DbCommandInterceptor
     {
-
         private readonly Stopwatch _stopwatch = new();
- 
+
         // Cria uma política de retry utilizando Polly
         private readonly AsyncPolicy _retryPolicy = Policy
-            .Handle<DbException>() // Define as exceções que dispararão o retry (DbException pode ser usado como base para erros de banco)
+            .Handle<DbException>() // Define as exceções que dispararão o retry
             .WaitAndRetryAsync(3, // Número máximo de tentativas
-                attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)), // Exponencial backoff: 1, 2, 4 segundos
+                attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)), // Exponencial backoff
                 (exception, timeSpan, retryCount, context) =>
                 {
                     logger.LogWarning($"Tentativa {retryCount} falhou. Aguardando {timeSpan.TotalSeconds} segundos antes de tentar novamente. Erro: {exception.Message}");
@@ -48,19 +51,14 @@ namespace CsharpORM.EF.Interceptor
                 // Aplicando a política de retry usando Polly
                 await _retryPolicy.ExecuteAsync(async () =>
                 {
-                    // Tentativa de reexecutar ou apenas logar
-                    logger.LogError("Tentando reexecutar a operação falha...");                    
+                    logger.LogError("Tentando reexecutar a operação falha...");
                 });
             }
             catch (Exception ex)
             {
-                // Caso o retry também falhe após o número máximo de tentativas
                 logger.LogError(ex, "Falha ao tentar reexecutar o comando após várias tentativas.");
-                // Aqui você pode optar por continuar ou lançar a exceção novamente
-                // throw;
             }
 
-            // Chamando o método base após o retry ou falha definitiva
             base.CommandFailed(command, eventData);
         }
     }
