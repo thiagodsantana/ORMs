@@ -69,6 +69,29 @@ namespace CsharpORM.Dapper.Services
         }
 
         /// <summary>
+        /// Busca todos os clientes cadastrados na tabela "Clientes" e retorna a contagem total.
+        /// </summary>
+        /// <returns>Uma tupla contendo o total de clientes e a lista de clientes.</returns>
+        public async Task<(int totalCount, IEnumerable<Cliente> clientes)> GetClientesCountAsync()
+        {
+            // Consulta SQL que retorna a contagem total de clientes e a lista de clientes.
+            const string sql = @"SELECT COUNT(*) FROM Clientes; 
+                         SELECT c.Id, c.Nome, c.Cpf FROM Clientes c;";
+
+            // Executa a consulta e processa múltiplos resultados.
+            using var multi = await dbConnection.QueryMultipleAsync(sql);
+
+            // Lê o primeiro resultado como a contagem total de clientes.
+            int totalCount = await multi.ReadFirstAsync<int>();
+
+            // Lê o segundo resultado como a lista de clientes.
+            var clientes = await multi.ReadAsync<Cliente>();
+
+            // Retorna a contagem total e a lista de clientes.
+            return (totalCount, clientes);
+        }
+
+        /// <summary>
         /// Insere um novo empréstimo na tabela "Emprestimos" dentro de uma transação local.
         /// </summary>
         public async Task CriarEmprestimo(Emprestimo emprestimo)
