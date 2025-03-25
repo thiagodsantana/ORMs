@@ -1,7 +1,6 @@
 ﻿using CsharpORM.Domain.Classes;
 using Dapper;
 using System.Data;
-using System.Transactions;
 
 namespace CsharpORM.Dapper.Services
 {
@@ -9,6 +8,7 @@ namespace CsharpORM.Dapper.Services
     // clientes e empréstimos.
     public class DapperService(IDbConnection dbConnection)
     {
+        #region Query
 
         /// <summary>
         /// Busca todos os clientes cadastrados na tabela "Clientes".
@@ -19,11 +19,15 @@ namespace CsharpORM.Dapper.Services
             const string sqlClientes = @"SELECT c.Id, c.Nome, c.Cpf
                                          FROM Clientes c";
 
-            // Executa a consulta de forma assíncrona e mapeia o resultado para a classe Cliente.
+            // Executa a consulta de forma assíncrona e
+            // mapeia o resultado para a classe Cliente.
             var clientes = await dbConnection.QueryAsync<Cliente>(sqlClientes);
             return clientes;
         }
 
+        #endregion
+
+        #region MultiMapping
         /// <summary>
         /// Busca os clientes e seus respectivos empréstimos utilizando mapeamento de relacionamento (1:N).
         /// </summary>
@@ -40,7 +44,8 @@ namespace CsharpORM.Dapper.Services
             // Dicionário para armazenar os clientes já mapeados, evitando duplicações.
             var clientes = new Dictionary<int, Cliente>();
 
-            // Executa a consulta utilizando multi-mapping para associar cada cliente aos seus empréstimos.
+            // Executa a consulta utilizando multi-mapping para associar
+            // cada cliente aos seus empréstimos.
             await dbConnection.QueryAsync<Cliente, Emprestimo, Cliente>(
                 sql,
                 (cliente, emprestimo) =>
@@ -49,16 +54,16 @@ namespace CsharpORM.Dapper.Services
                     if (!clientes.TryGetValue(cliente.Id, out var clienteExistente))
                     {
                         clienteExistente = cliente;
-                        clienteExistente.Emprestimos = new List<Emprestimo>();
+                        clienteExistente.Emprestimos = [];
                         clientes.Add(clienteExistente.Id, clienteExistente);
                     }
 
                     // Se houver um empréstimo válido, adiciona-o à lista do cliente.
-                    if (emprestimo is not null && emprestimo.Id > 0)
+                    // Adiciona o empréstimo à lista do cliente, se for válido.
+                    if (emprestimo?.Id > 0)
                     {
-                        clienteExistente.Emprestimos.Add(emprestimo);
+                        clienteExistente.Emprestimos!.Add(emprestimo);
                     }
-
                     return clienteExistente;
                 },
                 splitOn: "EmprestimoId"
@@ -67,7 +72,9 @@ namespace CsharpORM.Dapper.Services
             // Retorna os clientes com seus respectivos empréstimos.
             return clientes.Values;
         }
+        #endregion
 
+        #region Query Multiple
         /// <summary>
         /// Busca todos os clientes cadastrados na tabela "Clientes" e retorna a contagem total.
         /// </summary>
@@ -90,7 +97,9 @@ namespace CsharpORM.Dapper.Services
             // Retorna a contagem total e a lista de clientes.
             return (totalCount, clientes);
         }
+        #endregion
 
+        #region Transação
         /// <summary>
         /// Insere um novo empréstimo na tabela "Emprestimos" dentro de uma transação local.
         /// </summary>
@@ -115,35 +124,31 @@ namespace CsharpORM.Dapper.Services
                 transaction.Rollback();
                 throw;
             }
-        }
+        }        
+        #endregion
 
+        #region Stored Procedure
         /// <summary>
-        /// Atualiza os dados de um cliente e insere um novo empréstimo em uma única transação utilizando TransactionScope.
+        /// Atualiza os dados de um cliente e insere um novo empréstimo em uma única transação
+        /// utilizando uma stored procedure.
         /// </summary>
-        public async Task AtualizarClienteEInserirEmprestimo(Cliente cliente, Emprestimo emprestimo)
+        public async Task AtualizarClienteStoredProcedure(Cliente cliente, Emprestimo emprestimo)
         {
-            // TransactionScope com fluxo assíncrono
-            // habilitado para trabalhar com async/await.
-            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-            // SQL para atualizar os dados do cliente.
-            const string sqlUpdateCliente = @"
-                    UPDATE Clientes 
-                    SET Nome = @Nome, Cpf = @Cpf 
-                    WHERE Id = @Id";
+            const string procedureName = "sp_AtualizarClienteEInserirEmprestimo";
 
-            // Executa a atualização do cliente de forma assíncrona.
-            await dbConnection.ExecuteAsync(sqlUpdateCliente, cliente);
+            var parametros = new
+            {
+                ClienteId = cliente.Id,
+                cliente.Nome,
+                cliente.Cpf,
+                emprestimo.Valor,
+                emprestimo.Parcelas,
+                emprestimo.TaxaJuros
+            };
 
-            // SQL para inserir o novo empréstimo.
-            const string sqlInsertEmprestimo = @"
-                    INSERT INTO Emprestimos (Valor, Parcelas, TaxaJuros, ClienteId) 
-                    VALUES (@Valor, @Parcelas, @TaxaJuros, @ClienteId)";
-
-            // Executa a inserção do empréstimo de forma assíncrona.
-            await dbConnection.ExecuteAsync(sqlInsertEmprestimo, emprestimo);
-
-            // Finaliza a transação, confirmando todas as operações.
-            scope.Complete();
+            await dbConnection.ExecuteAsync(procedureName, parametros, commandType: CommandType.StoredProcedure);
         }
+        #endregion
     }
+
 }
