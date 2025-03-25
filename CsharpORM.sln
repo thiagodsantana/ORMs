@@ -1,3 +1,4 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
@@ -15,6 +16,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpORM.Data", "CsharpORM.Data\CsharpORM.Data.csproj", "{C137309C-8F81-4D95-889C-7140DDE45F56}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpORM.Benchmark", "CsharpORM.Benchmark\CsharpORM.Benchmark.csproj", "{18626709-961E-40BC-9D0A-6C42ACCE0987}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Itens de Solução", "Itens de Solução", "{D07CA336-7C5E-4935-BE6B-1D6EB9CFA584}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\OneDrive\Área de Trabalho\ORMs.pot = ..\..\..\..\OneDrive\Área de Trabalho\ORMs.pot
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

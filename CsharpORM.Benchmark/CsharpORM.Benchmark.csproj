@@ -10,6 +10,13 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="System.Net.Http.Json" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CsharpORM.ApiService\CsharpORM.EF.csproj" />
+    <ProjectReference Include="..\CsharpORM.Dapper\CsharpORM.Dapper.csproj" />
   </ItemGroup>
 
 </Project>

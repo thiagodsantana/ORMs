@@ -14,11 +14,12 @@ namespace CsharpORM.EF.Services.LoadingModes
         /// Utiliza o método Include para realizar o carregamento (Eager Loading) dos empréstimos.
         /// </summary>
         /// <returns>IQueryable contendo os clientes com suas respectivas coleções de empréstimos.</returns>
-        public async Task<List<Cliente>> GetClientesComEmprestimos()
+        public async Task<Cliente[]> GetClientesComEmprestimos()
         {
             // O método Include indica ao EF para carregar a propriedade de navegação "Emprestimos"
             // associada a cada Cliente, realizando o carregamento Eager Loading.
-            return await context.Clientes.Include(c => c.Emprestimos).ToListAsync();
+            return await context.Clientes.Include(c => c.Emprestimos).AsNoTracking().ToArrayAsync();
+
         }
     }
 }

@@ -39,7 +39,7 @@ namespace CsharpORM.Dapper.Services
                     c.Id, c.Nome, c.Cpf, 
                     e.Id AS EmprestimoId, e.Valor, e.Parcelas, e.TaxaJuros, e.ClienteId
                 FROM Clientes c
-                LEFT JOIN Emprestimos e ON e.ClienteId = c.Id";
+                INNER JOIN Emprestimos e ON e.ClienteId = c.Id";
 
             // Dicionário para armazenar os clientes já mapeados, evitando duplicações.
             var clientes = new Dictionary<int, Cliente>();
